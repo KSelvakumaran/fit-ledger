@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fit Ledger</title>
+<meta name="description" content="BMI, food and gym log, with a daily check on whether you're helping or hurting your wellbeing.">
+<meta name="theme-color" content="#0f7a5a">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fit Ledger">
+<style>
+:root{--bg:#f3f6f4;--card:#fff;--ink:#14201b;--mute:#5d6b65;--line:#e1e8e4;--acc:#0f7a5a;--acc-soft:#e2f2ea;--good:#16855a;--warn:#b7700a;--bad:#c13d2b;--good-soft:#e2f3ea;--warn-soft:#fbf0dc;--bad-soft:#fbe6e2;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1412;--card:#18201d;--ink:#e7efeb;--mute:#93a39c;--line:#2a3531;--acc:#3bbf8c;--acc-soft:#173a2d;--good:#45c58f;--warn:#e3a33f;--bad:#ee7a68;--good-soft:#173a2d;--warn-soft:#3a2d14;--bad-soft:#3d1f1a;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:560px;margin:0 auto;padding:0 16px calc(84px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 16px 8px;max-width:560px;margin:0 auto}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+h1{font-size:19px;margin:0;letter-spacing:-.01em}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);margin:20px 0 8px;font-weight:600}
+.datenav{display:flex;align-items:center;gap:4px}
+.datenav span{min-width:108px;text-align:center;font-weight:600;font-size:14px}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+.ib{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:18px;color:var(--mute)}
+.ib:active{background:var(--line)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mute{color:var(--mute)} .sm{font-size:13px} .xs{font-size:12px}
+.btn{background:var(--acc);color:#fff;border-radius:12px;padding:11px 16px;font-weight:600}
+.btn.ghost{background:var(--acc-soft);color:var(--acc)}
+.btn.danger{background:var(--bad-soft);color:var(--bad)}
+.btn.full{width:100%}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600}
+.good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+.pill.good{background:var(--good-soft)} .pill.warn{background:var(--warn-soft)} .pill.bad{background:var(--bad-soft)}
+.score{display:flex;gap:14px;align-items:center}
+.ring{flex:none}
+.verdict{font-size:18px;font-weight:700;margin:2px 0}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:5px}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--acc)}
+.bar i.over{background:var(--bad)}
+.metric{margin-top:12px}
+.metric .row{font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat b{display:block;font-size:20px} .stat span{font-size:12px;color:var(--mute)}
+.meal h3{margin:0;font-size:15px}
+.item{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.item:first-of-type{border-top:0}
+.item .nm{flex:1;min-width:0}
+.item .nm small{display:block;color:var(--mute);font-size:12px}
+.item .del{color:var(--mute);width:28px;height:28px;border-radius:8px}
+.tag{font-size:10px;padding:1px 6px;border-radius:6px;background:var(--bad-soft);color:var(--bad);margin-left:4px;vertical-align:middle;font-weight:600}
+.tag.ok{background:var(--good-soft);color:var(--good)}
+.add{color:var(--acc);font-weight:600;font-size:14px;padding:6px 0}
+.sug{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+.sug:first-child{border-top:0;padding-top:2px}
+.sug .dot{flex:none;width:8px;height:8px;border-radius:50%;margin-top:7px;background:var(--warn)}
+.sug .dot.bad{background:var(--bad)} .sug .dot.good{background:var(--good)}
+.water{display:flex;align-items:center;gap:10px}
+.water b{font-size:20px;min-width:58px;text-align:center}
+.water .ib{background:var(--acc-soft);color:var(--acc);font-weight:700}
+label{display:block;font-size:13px;color:var(--mute);margin:10px 0 4px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 11px}
+input:focus,select:focus{outline:2px solid var(--acc);outline-offset:-1px}
+.seg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.seg button{flex:1;padding:8px 4px;border-radius:8px;font-size:13px;color:var(--mute)}
+.seg button.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 1px 2px #0002}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);margin:0}
+.chk input{width:18px;height:18px;accent-color:var(--acc)}
+.chips{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom);z-index:6}
+nav button{flex:1;max-width:186px;padding:9px 0 10px;font-size:12px;color:var(--mute);display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button svg{width:22px;height:22px}
+nav button.on{color:var(--acc);font-weight:600}
+dialog{border:0;padding:0;border-radius:20px 20px 0 0;width:100%;max-width:560px;margin:auto auto 0;background:var(--card);color:var(--ink);max-height:88vh}
+dialog::backdrop{background:#0007}
+.sheet{padding:16px 16px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;max-height:88vh}
+.sheet .scroll{overflow:auto;flex:1;margin:0 -16px;padding:0 16px}
+.res{display:flex;justify-content:space-between;gap:8px;padding:10px 4px;border-bottom:1px solid var(--line);font-size:14px;width:100%;text-align:left}
+.res.on{background:var(--acc-soft);border-radius:8px}
+.res small{color:var(--mute)}
+.picked{border-top:1px solid var(--line);padding-top:12px;margin-top:8px}
+.step{display:flex;align-items:center;gap:8px}
+.step b{min-width:40px;text-align:center}
+.step .ib{background:var(--acc-soft);color:var(--acc);font-weight:700}
+.chart{width:100%;height:auto;display:block}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:7px 4px;text-align:right;border-top:1px solid var(--line)}
+th{color:var(--mute);font-weight:600;border-top:0}
+td:first-child,th:first-child{text-align:left}
+.empty{text-align:center;padding:26px 10px;color:var(--mute)}
+.bmi-scale{display:flex;height:8px;border-radius:99px;overflow:hidden;margin:10px 0 4px;position:relative}
+.bmi-scale i{display:block;height:100%}
+.bmi-mark{position:absolute;top:-4px;width:3px;height:16px;background:var(--ink);border-radius:2px}
+.hidden{display:none!important}
+.aibox{background:var(--acc-soft);border-radius:14px;padding:12px;margin-top:10px}
+.aibox textarea{background:var(--card);resize:vertical;min-height:58px}
+.aibox .row{margin-top:8px}
+.ai-lbl{font-size:12px;font-weight:700;color:var(--acc);letter-spacing:.03em;margin-bottom:6px}
+.btn.sm{padding:8px 12px;font-size:13px}
+.btn:disabled{opacity:.55}
+.airow{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.airow:first-child{border-top:0}
+.airow input[type=checkbox]{width:18px;height:18px;flex:none;accent-color:var(--acc)}
+.airow input[type=number]{width:58px;padding:6px;text-align:center}
+.airow .nm{flex:1;min-width:0}.airow .nm small{display:block;color:var(--mute);font-size:12px}
+.aicomment{font-size:13px;margin:8px 0;padding:8px 10px;background:var(--card);border-radius:10px}
+.thumb{width:44px;height:44px;border-radius:8px;object-fit:cover}
+.coach{font-size:14px}.coach p{margin:6px 0}.coach ul{margin:4px 0 8px;padding-left:18px}.coach li{margin:3px 0}
+.err{color:var(--bad);font-size:13px;margin-top:6px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp 0.7s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1 id="title">Fit Ledger</h1>
+    <div class="datenav" id="datenav">
+      <button class="ib" id="prev" aria-label="Previous day">‹</button>
+      <span id="dateLbl"></span>
+      <button class="ib" id="next" aria-label="Next day">›</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="v-today"></section>
+  <section id="v-progress" class="hidden"></section>
+  <section id="v-me" class="hidden"></section>
+</main>
+
+<nav>
+  <button data-v="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>Today</button>
+  <button data-v="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"/></svg>Progress</button>
+  <button data-v="me"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Me</button>
+</nav>
+
+<!-- Food sheet -->
+<dialog id="dFood"><div class="sheet">
+  <div class="row"><h1>Add food</h1><div class="row" style="gap:4px"><select id="pMeal" style="width:auto;padding:7px 9px"><option>Breakfast</option><option>Lunch</option><option>Snacks</option><option>Dinner</option></select><button class="ib" data-close>✕</button></div></div>
+  <div class="aibox" id="fAI">
+    <div class="ai-lbl">✨ AI — DESCRIBE OR SNAP YOUR PLATE</div>
+    <textarea id="aiFoodTxt" rows="2" placeholder="2 masala dosa with coconut chutney and a filter coffee, less sugar"></textarea>
+    <div class="row">
+      <div class="row" style="gap:8px"><label class="btn ghost sm" for="aiPhoto" style="margin:0;color:var(--acc)">📷 Photo</label><input type="file" id="aiPhoto" accept="image/*" class="hidden"><img id="aiThumb" class="thumb hidden" alt=""></div>
+      <button class="btn sm" id="aiFoodGo">Analyse</button>
+    </div>
+    <div id="aiFoodOut"></div>
+  </div>
+  <p class="xs mute hidden" id="fAIhint" style="margin:8px 0 0">✨ Want to just type or photograph your meal? Add an API key in <b>Me → AI assistant</b>.</p>
+  <input id="fSearch" placeholder="Search: idli, chapati, chicken, banana…" autocomplete="off" style="margin-top:10px">
+  <div class="scroll" id="fList" style="margin-top:6px"></div>
+  <button class="add" id="fCustomTgl" style="text-align:left">+ My own food (not in list)</button>
+  <div id="fCustom" class="hidden">
+    <div class="grid2">
+      <div><label>Name</label><input id="cN"></div>
+      <div><label>Serving</label><input id="cU" placeholder="1 bowl"></div>
+      <div><label>Calories (kcal)</label><input id="cK" type="number" inputmode="decimal"></div>
+      <div><label>Protein (g)</label><input id="cP" type="number" inputmode="decimal"></div>
+      <div><label>Carbs (g)</label><input id="cC" type="number" inputmode="decimal"></div>
+      <div><label>Fat (g)</label><input id="cF" type="number" inputmode="decimal"></div>
+      <div><label>Fiber (g)</label><input id="cFi" type="number" inputmode="decimal"></div>
+      <div><label>Added sugar (g)</label><input id="cS" type="number" inputmode="decimal"></div>
+    </div>
+    <label>This food is…</label>
+    <div class="chips" id="cTags">
+      <label class="chk"><input type="checkbox" value="fried">Fried</label>
+      <label class="chk"><input type="checkbox" value="junk">Junk / packaged</label>
+      <label class="chk"><input type="checkbox" value="sugary">Sweet</label>
+      <label class="chk"><input type="checkbox" value="veg">Veg / salad</label>
+      <label class="chk"><input type="checkbox" value="fruit">Fruit</label>
+      <label class="chk"><input type="checkbox" value="protein">Protein-rich</label>
+      <label class="chk"><input type="checkbox" value="alcohol">Alcohol</label>
+    </div>
+    <button class="btn ghost full" id="cSave" style="margin-top:12px">Save to my foods</button>
+  </div>
+  <div class="picked hidden" id="fPicked">
+    <div class="row"><div><b id="pName"></b><div class="xs mute" id="pInfo"></div></div></div>
+    <div class="row" style="margin-top:10px">
+      <div class="step"><button class="ib" id="qMinus">−</button><b id="qVal">1</b><button class="ib" id="qPlus">+</button></div>
+    </div>
+    <button class="btn full" id="pAdd" style="margin-top:12px">Add</button>
+  </div>
+</div></dialog>
+
+<!-- Workout sheet -->
+<dialog id="dWork"><div class="sheet">
+  <div class="row"><h1>Add workout</h1><button class="ib" data-close>✕</button></div>
+  <div class="scroll">
+    <div class="aibox" id="wAI">
+      <div class="ai-lbl">✨ AI — DESCRIBE YOUR SESSION</div>
+      <textarea id="aiWorkTxt" rows="3" placeholder="Chest day: bench 4×10 @60kg, incline DB 3×12, cable fly 3×15, dips 3×10. Then 15 min treadmill."></textarea>
+      <div class="row"><span></span><button class="btn sm" id="aiWorkGo">Analyse</button></div>
+      <div id="aiWorkOut"></div>
+    </div>
+    <p class="xs mute hidden" id="wAIhint" style="margin:8px 0 0">✨ Add an API key in <b>Me → AI assistant</b> to describe sessions in your own words.</p>
+    <p class="xs mute" style="margin:12px 0 0">Or add manually:</p>
+    <label>What did you do?</label><select id="wType"></select>
+    <label>Minutes</label><input id="wMin" type="number" inputmode="numeric" value="45">
+    <label>How hard?</label>
+    <div class="seg" id="wInt"><button data-i="light">Easy</button><button data-i="moderate" class="on">Moderate</button><button data-i="hard">Hard</button></div>
+    <label>Notes (optional)</label><input id="wNote" placeholder="Chest + triceps, 5 exercises × 4 sets">
+    <p class="sm mute" id="wEst"></p>
+  </div>
+  <button class="btn full" id="wAdd">Add workout</button>
+</div></dialog>
+
+<script>
+/* ---------- storage ---------- */
+const KEY='fitledger-v1'; let memCopy=null;
+function load(){try{const r=localStorage.getItem(KEY);if(r)return JSON.parse(r)}catch(e){}return memCopy}
+function save(){memCopy=JSON.parse(JSON.stringify(state));try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+let state=load()||{profile:null,weights:[],days:{},custom:[],settings:{bmiScale:'asia'}};
+state.settings=state.settings||{bmiScale:'asia'};state.custom=state.custom||[];
+
+/* ---------- dates ---------- */
+const pad=n=>String(n).padStart(2,'0');
+const keyOf=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseKey=k=>{const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)};
+const todayKey=()=>keyOf(new Date());
+const shift=(k,n)=>{const d=parseKey(k);d.setDate(d.getDate()+n);return keyOf(d)};
+const fmt=k=>parseKey(k).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+const fmtShort=k=>{const d=parseKey(k);return pad(d.getDate())+'/'+pad(d.getMonth()+1)};
+let cur=todayKey(), view='today';
+const EMPTY={foods:[],workouts:[],water:0,done:false};
+const getDay=k=>state.days[k]||EMPTY;
+const dayW=k=>state.days[k]||(state.days[k]={foods:[],workouts:[],water:0,done:false});
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const r0=n=>Math.round(n), r1=n=>Math.round(n*10)/10;
+
+/* ---------- food database (per serving, approx.) ----------
+   name, serving, kcal, protein, carbs, fat, fiber, added sugar, tags, diet(v=veg e=egg n=non-veg) */
+const RAW=[
+['Idli','1 piece',58,2,12,.2,.5,0,'','v'],['Plain dosa','1 dosa',133,3,18,5,1,0,'','v'],['Masala dosa','1 dosa',300,6,42,12,3,0,'','v'],
+['Ghee roast dosa','1 dosa',250,4,30,13,1,0,'rich','v'],['Medu vada','1 piece',135,4,13,8,1.5,0,'fried','v'],['Pongal','1 plate',300,8,40,12,2,0,'','v'],
+['Upma','1 plate',250,6,38,8,3,0,'','v'],['Poha','1 plate',250,5,45,6,2,0,'','v'],['Chapati / roti','1 roti',104,3,18,2.5,2.5,0,'whole','v'],
+['Paratha (plain)','1 paratha',230,5,30,10,3,0,'rich','v'],['Aloo paratha','1 paratha',290,6,40,12,4,0,'rich','v'],['Kerala parotta','1 parotta',300,6,40,13,1,0,'refined,rich','v'],
+['Puri','1 puri',100,2,12,5,.5,0,'fried','v'],['White rice','1 cup cooked',195,4,43,.4,.6,0,'refined','v'],['Brown rice','1 cup cooked',215,5,45,1.8,3.5,0,'whole','v'],
+['Ragi mudde / millet','1 ball',220,6,46,1.5,6,0,'whole','v'],['Curd rice','1 plate',280,8,45,7,1,0,'','v'],['Lemon / tamarind rice','1 plate',330,6,55,10,2,0,'refined','v'],
+['Dal','1 katori',150,9,20,4,5,0,'protein','v'],['Sambar','1 katori',110,5,15,3,4,0,'veg','v'],['Rasam','1 katori',50,1.5,8,1.5,1,0,'','v'],
+['Rajma / chana curry','1 katori',210,10,28,6,8,0,'protein','v'],['Veg curry / poriyal','1 katori',120,3,12,7,4,0,'veg','v'],['Palak paneer','1 katori',270,13,9,20,3,0,'protein,veg','v'],
+['Paneer butter masala','1 katori',350,12,12,28,2,4,'rich','v'],['Paneer (plain)','100 g',265,18,3,20,0,0,'protein','v'],['Soya chunks (cooked)','1 katori',170,17,11,5,4,0,'protein','v'],
+['Curd','1 katori',60,3.5,4.7,3.3,0,0,'','v'],['Buttermilk','1 glass',40,2,3,1.5,0,0,'','v'],['Milk (toned)','1 glass',120,6.5,9.5,6,0,0,'','v'],
+['Boiled egg','1 egg',78,6.3,.6,5.3,0,0,'protein','e'],['Omelette','2 eggs',190,13,1,15,0,0,'protein','e'],['Egg whites','3 whites',51,11,.7,.2,0,0,'protein','e'],
+['Egg curry','1 katori (2 eggs)',250,14,7,18,1,0,'protein','e'],
+['Chicken breast (grilled)','100 g',165,31,0,3.6,0,0,'protein','n'],['Tandoori chicken','2 pieces',260,30,4,13,0,0,'protein','n'],['Chicken curry','1 katori',260,24,6,15,1,0,'protein','n'],
+['Chicken 65 / fried chicken','6 pieces',380,25,15,25,0,0,'fried','n'],['Chicken biryani','1 plate',550,25,65,20,2,0,'rich,refined','n'],['Fish curry','1 katori',200,20,5,11,1,0,'protein','n'],
+['Fish fry','1 piece',220,18,6,14,0,0,'fried','n'],['Mutton curry','1 katori',330,25,6,23,1,0,'rich','n'],['Veg biryani','1 plate',450,10,65,16,4,0,'rich,refined','v'],
+['Sprouts','1 cup',100,7,15,.7,4,0,'protein,veg','v'],['Salad (cucumber, carrot, tomato)','1 bowl',40,1.5,8,.3,2.5,0,'veg','v'],['Roasted chana','30 g',110,6,18,2,5,0,'protein','v'],
+['Banana','1 medium',105,1.3,27,.4,3,0,'fruit','v'],['Apple','1 medium',95,.5,25,.3,4.4,0,'fruit','v'],['Orange / mosambi','1 medium',62,1.2,15,.2,3,0,'fruit','v'],
+['Papaya','1 cup',60,.7,15,.4,2.5,0,'fruit','v'],['Guava','1 medium',70,2.5,14,1,5,0,'fruit','v'],['Watermelon','1 cup',46,1,11,.2,.6,0,'fruit','v'],
+['Oats with milk','1 bowl',280,13,38,8,4.5,0,'whole','v'],['Peanuts','30 g',170,7,5,14,2.5,0,'','v'],['Almonds','10 almonds',70,2.5,2.5,6,1.5,0,'','v'],
+['Makhana (roasted)','1 cup',100,3.5,20,.5,2,0,'','v'],['Peanut butter','1 tbsp',95,4,3,8,1,1,'','v'],['Whey protein','1 scoop',120,24,3,1.5,0,0,'protein','v'],
+['Brown bread','2 slices',140,6,24,2,4,0,'whole','v'],['White bread','2 slices',150,5,28,2,1,2,'refined','v'],
+['Tea with sugar','1 cup',80,2,11,2.5,0,8,'','v'],['Filter coffee with sugar','1 cup',90,3,12,3,0,8,'','v'],['Black coffee / tea (no sugar)','1 cup',5,.3,.5,0,0,0,'','v'],
+['Soft drink','300 ml',130,0,33,0,0,33,'sugary','v'],['Packaged juice','200 ml',110,0,27,0,0,20,'sugary','v'],['Biscuits','4 biscuits',140,2,20,6,.5,8,'junk','v'],
+['Samosa','1 piece',260,4,30,14,2,0,'fried','v'],['Bajji / bonda','2 pieces',220,4,22,13,2,0,'fried','v'],['Chips','small pack',160,2,15,10,1,0,'fried,junk','v'],
+['Gulab jamun / sweet','1 piece',150,2,22,6,.3,18,'sugary','v'],['Ice cream','1 scoop',140,2.5,17,7,.5,14,'sugary','v'],['Pizza','2 slices',550,22,60,24,3,4,'junk','v'],
+['Burger','1 burger',450,20,45,20,2,6,'junk','n'],['Maggi / instant noodles','1 pack',350,7,48,14,2,1,'junk,refined','v'],['Fried rice / noodles (restaurant)','1 plate',550,12,75,20,3,2,'junk,refined','v'],
+['Beer','330 ml',150,1.5,13,0,0,0,'alcohol','v'],['Ghee','1 tsp',45,0,0,5,0,0,'','v']];
+const FOODS=RAW.map(a=>({n:a[0],u:a[1],k:a[2],p:a[3],c:a[4],f:a[5],fi:a[6],s:a[7],t:a[8],d:a[9]}));
+const allFoods=()=>[...state.custom,...FOODS];
+
+const SWAP={'Medu vada':'2 idlis instead of a vada','Puri':'chapati instead of puri','Samosa':'sprouts chaat or roasted chana','Bajji / bonda':'roasted chana or makhana',
+'Chips':'a handful of peanuts or makhana','Biscuits':'a fruit or 10 almonds','Maggi / instant noodles':'oats, poha or upma','Pizza':'a home-cooked meal with a protein side',
+'Burger':'grilled chicken with chapati','Kerala parotta':'chapati','Fish fry':'fish curry or grilled fish','Chicken 65 / fried chicken':'tandoori or grilled chicken',
+'Fried rice / noodles (restaurant)':'rice with dal and a veg side','Soft drink':'buttermilk or lemon water without sugar','Packaged juice':'the whole fruit'};
+
+/* ---------- workouts (MET values) ---------- */
+const WK=[['weights','Weight training',4.5],['running','Running',9.8],['jogging','Jogging',7],['walking','Brisk walking',4.3],['cycling','Cycling',7.5],
+['hiit','HIIT / circuit',8],['cardio','Cardio machine (treadmill, elliptical)',6],['skipping','Skipping rope',11],['swimming','Swimming',7],
+['yoga','Yoga / stretching',2.5],['badminton','Badminton',5.5],['football','Football',7],['cricket','Cricket',5]];
+const INT={light:.75,moderate:1,hard:1.3}, INTL={light:'Easy',moderate:'Moderate',hard:'Hard'};
+const LIFE={desk:1.2,feet:1.375,physical:1.55};
+
+/* ---------- body maths ---------- */
+function weightOn(k){const w=state.weights.filter(x=>x.date<=k);if(w.length)return w[w.length-1].kg;return state.weights[0]?.kg||70}
+function bmiInfo(kg,cm){const h=cm/100,b=kg/(h*h),asia=state.settings.bmiScale!=='who',cuts=asia?[18.5,23,25]:[18.5,25,30];
+  let cat,cls;if(b<cuts[0]){cat='Underweight';cls='warn'}else if(b<cuts[1]){cat='Healthy';cls='good'}else if(b<cuts[2]){cat='Overweight';cls='warn'}else{cat='Obese';cls='bad'}
+  return{b,cat,cls,cuts,lo:18.5*h*h,hi:(cuts[1]-.1)*h*h,asia}}
+
+/* target weight → weekly pace → daily calorie adjustment (capped to safe limits) */
+function goalPace(P,w){const def={adj:P.goal==='gain'?300:500};
+  if(!P.targetKg||P.goal==='maintain')return def;
+  const toGo=P.targetKg-w;if((P.goal==='lose'&&toGo>=0)||(P.goal==='gain'&&toGo<=0))return{adj:0,reached:true};
+  const maxRate=P.goal==='lose'?Math.min(.45,w*.0075):.3; // kg per week
+  let need=null,weeks=null;
+  if(P.targetDate){weeks=(parseKey(P.targetDate)-parseKey(todayKey()))/864e5/7;if(weeks>0)need=Math.abs(toGo)/weeks}
+  const rate=need===null?maxRate:Math.max(P.goal==='lose'?.2:.1,Math.min(maxRate,need));
+  const adj=r0(Math.min(P.goal==='lose'?500:330,rate*1100));
+  const etaWeeks=Math.abs(toGo)/rate,eta=shift(todayKey(),Math.ceil(etaWeeks*7));
+  return{adj,rate,need,toGo,eta,tooFast:need!==null&&need>maxRate,maxRate}}
+function analyse(k){
+  const P=state.profile;if(!P)return null;
+  const d=getDay(k),w=weightOn(k),hcm=P.heightCm,h=hcm/100,male=P.sex==='m';
+  const bmr=10*w+6.25*hcm-5*P.age+(male?5:-161);
+  const base=bmr*(P.lifestyle==='ai'?(P.lifeMult||1.2):(LIFE[P.lifestyle]||1.2));
+  const burn=d.workouts.reduce((a,x)=>a+x.kcal,0), mins=d.workouts.reduce((a,x)=>a+x.min,0);
+  const tdee=base+burn, floor=Math.max(bmr,male?1500:1200);
+  const pace=goalPace(P,w);
+  const target=P.goal==='lose'?Math.max(floor,tdee-pace.adj):P.goal==='gain'?tdee+pace.adj:tdee;
+  const trained=[0,1,2,3,4,5,6].some(i=>getDay(shift(k,-i)).workouts.length);
+  const refW=Math.min(w,24.9*h*h);
+  const pT=r0(refW*((P.goal!=='maintain'||trained)?1.6:1.0)), fibT=male?30:25, sugT=25, waterT=Math.max(8,r0(w*35/250));
+  const t={k:0,p:0,c:0,f:0,fi:0,s:0};let fv=0,refK=0,alc=0,rich=0;const flagged=[];
+  d.foods.forEach(x=>{const q=x.qty;for(const key in t)t[key]+=(x[key]||0)*q;const tg=x.t||'';
+    if(/fruit|veg/.test(tg))fv+=q; if(/fried|junk/.test(tg))flagged.push(x); if(/refined/.test(tg))refK+=x.k*q; if(/alcohol/.test(tg))alc+=q; if(/rich/.test(tg))rich+=q});
+  const complete=d.done||k<todayKey();
+  const res={d,w,bmr,base,burn,mins,tdee,floor,target,pT,fibT,sugT,waterT,t,fv,flagged,alc,complete,empty:!d.foods.length};
+  if(res.empty)return res;
+  // judge partial days against the share of the day already eaten
+  const frac=complete?1:Math.min(1,Math.max(.25,t.k/target));
+  const diff=(t.k-target)/target, dev=Math.abs(diff);
+  let cal=dev<=.1?25:dev>=.4?0:25*(.4-dev)/.3;
+  if(diff<0&&(!complete||(P.goal==='lose'&&t.k>=floor*.95)))cal=25;
+  if(complete&&t.k<floor*.85)cal=Math.min(cal,8);
+  const pro=25*Math.min(1,t.p/(pT*frac));
+  const fib=15*Math.min(1,t.fi/(fibT*frac))+(fv>=3*frac?5:fv>=1?3:0);
+  const flagQ=flagged.reduce((a,x)=>a+x.qty,0);
+  let qual=15-4*flagQ-2*rich-(t.s>50?8:t.s>sugT?5:0)-4*alc-(refK>t.k*.5?3:0);qual=Math.max(0,qual);
+  const wat=10*Math.min(1,d.water/(waterT*Math.max(frac,.5)));
+  const mov=mins>=20?5:mins>0?3:2;
+  res.score=r0(Math.min(100,cal+pro+fib+qual+wat+mov));
+  res.parts={cal,pro,fib,qual,wat,mov};res.diff=diff;res.frac=frac;
+  res.verdict=res.score>=75?['Helping your wellbeing','good']:res.score>=55?['Mixed — some fixes needed','warn']:['Working against you','bad'];
+  res.sugs=suggest(res,P);
+  return res;
+}
+
+function suggest(a,P){
+  const out=[],t=a.t,d=a.d;
+  const protOpts=['a katori of dal or rajma (+9–10 g)','100 g paneer or soya chunks (+17 g)','a cup of sprouts (+7 g)','a katori of curd or a glass of milk (+4–7 g)','a scoop of whey (+24 g)'];
+  if(P.diet!=='v')protOpts.unshift('2 boiled eggs (+12 g)');
+  if(P.diet==='n')protOpts.unshift('100 g grilled chicken (+31 g)','a katori of fish curry (+20 g)');
+  const pGap=a.pT*a.frac-t.p;
+  if(a.complete&&t.k<a.floor*.85)out.push(['bad',`You ate ${r0(t.k)} kcal, well under your minimum of ${r0(a.floor)}. Eating this little${a.burn?' on a workout day':''} costs muscle and energy — add a proper meal rather than cutting further.`]);
+  if(a.diff>.1)out.push(['bad',`About ${r0(t.k-a.target)} kcal over your target of ${r0(a.target)}. Biggest item: ${biggest(d)} — a smaller portion there closes most of the gap.`]);
+  if(pGap>10)out.push([pGap>25?'bad':'warn',`Protein is ${r0(t.p)} g of ${a.complete?a.pT+' g':r0(a.pT*a.frac)+' g expected so far (day target '+a.pT+' g)'}. ${a.burn?'After training this matters most. ':''}Easy adds: ${protOpts.slice(0,3).join(', ')}.`]);
+  a.flagged.forEach(x=>out.push(['warn',`${x.n} is fried/junk. Try ${SWAP[x.n]||'a home-cooked, non-fried option'} next time.`]));
+  if(t.s>a.sugT){const tea=d.foods.filter(x=>/sugar/i.test(x.n)).reduce((s,x)=>s+x.qty,0);
+    out.push([t.s>50?'bad':'warn',`Added sugar is ~${r0(t.s)} g (limit ${a.sugT} g).${tea?` Your ${tea} cup${tea>1?'s':''} of tea/coffee add ${tea*8} g — try half sugar.`:''} Swap sweets and soft drinks for fruit.`])}
+  if(a.complete&&t.fi<a.fibT*.7)out.push(['warn',`Fiber ${r0(t.fi)} g of ${a.fibT} g. Swap white rice for brown rice or millets, and add a salad or sprouts.`]);
+  if(a.fv<1&&(a.complete||a.frac>.5))out.push(['warn','No fruit or vegetables logged. Add a fruit and a katori of poriyal or salad.']);
+  if(a.alc)out.push(['warn','Alcohol slows recovery and adds empty calories. Keep it occasional, and skip it on training days.']);
+  const wNeed=a.complete?a.waterT:r0(a.waterT*Math.max(a.frac,.5));
+  if(d.water<wNeed)out.push(['warn',`Water ${d.water} of ${a.waterT} glasses${a.complete?'':' (aim for '+wNeed+' by now)'}. ${a.burn?'Add 2 extra glasses on gym days.':''}`]);
+  if(!out.length)out.push(['good',a.complete?'Solid day — calories, protein, fiber and water all on track. Repeat this pattern.':'On track so far. Keep the next meal balanced: protein + veg + a whole grain.']);
+  return out;
+}
+function biggest(d){let b=null;d.foods.forEach(x=>{if(!b||x.k*x.qty>b.k*b.qty)b=x});return b?`${b.n} (${r0(b.k*b.qty)} kcal)`:''}
+
+/* ---------- views ---------- */
+function ring(score,cls){const R=30,C=2*Math.PI*R,col=`var(--${cls})`;
+  return `<svg class="ring" width="76" height="76" viewBox="0 0 76 76"><circle cx="38" cy="38" r="${R}" fill="none" stroke="var(--line)" stroke-width="8"/>
+  <circle cx="38" cy="38" r="${R}" fill="none" stroke="${col}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C*score/100} ${C}" transform="rotate(-90 38 38)"/>
+  <text x="38" y="44" text-anchor="middle" font-size="19" font-weight="700" fill="var(--ink)">${score}</text></svg>`}
+function metric(label,val,max,unit,limit){const pct=Math.min(100,val/max*100),over=limit&&val>max;
+  return `<div class="metric"><div class="row"><span>${label}</span><span class="${over?'bad':'mute'}">${r0(val)} / ${r0(max)} ${unit}</span></div><div class="bar"><i class="${over?'over':''}" style="width:${pct}%"></i></div></div>`}
+
+function renderToday(){
+  const el=document.getElementById('v-today');const P=state.profile;
+  if(!P){el.innerHTML=`<div class="card empty" style="margin-top:12px"><p style="font-size:16px;color:var(--ink)"><b>Welcome</b></p><p>Set up your height, weight and goal first. Takes 20 seconds.</p><button class="btn" onclick="go('me')">Set up profile</button></div>`;return}
+  const a=analyse(cur),d=a.d,bi=bmiInfo(a.w,P.heightCm);let h='';
+  // score
+  if(a.empty){h+=`<div class="card"><div class="score">${ring(0,'line')}<div><div class="verdict">No food logged</div><div class="sm mute">Log what you eat and the check runs automatically.</div></div></div>
+    ${getDay(shift(cur,-1)).foods.length?`<button class="btn ghost full" style="margin-top:12px" onclick="copyPrev()">Copy yesterday's meals</button>`:''}</div>`}
+  else{h+=`<div class="card"><div class="score">${ring(a.score,a.verdict[1])}<div><div class="xs mute">${a.complete?'Day check':'So far today'}</div><div class="verdict ${a.verdict[1]}">${a.verdict[0]}</div>
+    <div class="sm mute">${a.complete?'Final for this day.':'Judged against what you\'ve eaten so far.'}</div></div></div>
+    ${metric('Calories',a.t.k,a.target,'kcal',true)}${metric('Protein',a.t.p,a.pT,'g')}${metric('Fiber',a.t.fi,a.fibT,'g')}${metric('Added sugar',a.t.s,a.sugT,'g',true)}
+    ${cur<=todayKey()&&cur===todayKey()?`<label class="chk" style="margin-top:14px"><input type="checkbox" ${d.done?'checked':''} onchange="markDone(this.checked)">I've logged everything for today</label>`:''}</div>`;
+    h+=`<h2>What to change</h2><div class="card">${a.sugs.map(s=>`<div class="sug"><span class="dot ${s[0]}"></span><div>${esc(s[1])}</div></div>`).join('')}</div>`;
+    if(hasAI()){const c=d.ai,stale=c&&c.sig!==daySig(d);
+      h+=`<h2>✨ AI coach</h2><div class="card">${c?`<div class="coach">${mdLite(c.text)}</div>${stale?'<p class="xs warn" style="margin:6px 0">Your log changed since this review.</p>':''}`:'<p class="sm mute" style="margin-top:0">Get a personal review of today and a plan for tomorrow, based on everything you logged.</p>'}
+      ${!c||stale?`<button class="btn ghost full" id="coachGo" onclick="askCoach()">✨ ${c?'Refresh review':'Ask AI coach'}</button>`:''}<div class="err" id="coachErr"></div></div>`}}
+  // energy
+  h+=`<div class="grid2"><div class="card stat"><b>${r0(a.t.k)}</b><span>kcal eaten</span></div><div class="card stat"><b>${r0(a.tdee)}</b><span>kcal burnt (${r0(a.burn)} from workouts)</span></div></div>`;
+  // meals
+  h+=`<h2>Food</h2>`;
+  ['Breakfast','Lunch','Snacks','Dinner'].forEach(m=>{const items=d.foods.filter(x=>x.meal===m),kc=items.reduce((s,x)=>s+x.k*x.qty,0);
+    h+=`<div class="card meal"><div class="row"><h3>${m}</h3><span class="sm mute">${kc?r0(kc)+' kcal':''}</span></div>
+    ${items.map(x=>`<div class="item"><div class="nm">${x.ai?'✨ ':''}${esc(x.n)}${/fried|junk/.test(x.t)?'<span class="tag">fried/junk</span>':''}${/sugary/.test(x.t)?'<span class="tag">sugary</span>':''}${/protein/.test(x.t)?'<span class="tag ok">protein</span>':''}
+      <small>${x.qty} × ${esc(x.u)} · ${r0(x.p*x.qty)} g protein</small></div><span class="sm">${r0(x.k*x.qty)}</span><button class="del" onclick="delFood('${x.id}')" aria-label="Remove">✕</button></div>`).join('')}
+    <button class="add" onclick="openFood('${m}')">+ Add</button></div>`});
+  // workouts
+  h+=`<h2>Gym & activity</h2><div class="card">${d.workouts.map(x=>`<div class="item"><div class="nm">${x.ai?"✨ ":""}${esc(x.name)} · ${x.min} min<small>${INTL[x.int]}${x.note?' · '+esc(x.note):''}</small></div><span class="sm">${r0(x.kcal)} kcal</span><button class="del" onclick="delWork('${x.id}')" aria-label="Remove">✕</button></div>`).join('')||'<div class="sm mute">Rest day so far.</div>'}
+    <button class="add" onclick="openWork()">+ Add workout</button></div>`;
+  // water
+  h+=`<h2>Water</h2><div class="card row"><div class="water"><button class="ib" onclick="water(-1)">−</button><b>${d.water}</b><button class="ib" onclick="water(1)">+</button></div><span class="sm mute">of ${a.waterT} glasses (250 ml)</span></div>`;
+  h+=`<p class="xs mute" style="text-align:center;margin-top:16px">BMI ${r1(bi.b)} · <span class="${bi.cls}">${bi.cat}</span> · ${r1(a.w)} kg</p>`;
+  el.innerHTML=h;
+}
+
+function renderProgress(){
+  const el=document.getElementById('v-progress');const P=state.profile;
+  if(!P){el.innerHTML=`<div class="card empty" style="margin-top:12px">Set up your profile first.<br><br><button class="btn" onclick="go('me')">Set up profile</button></div>`;return}
+  let h=`<h2>Log weight</h2><div class="card"><div class="grid2"><div><label>Date</label><input type="date" id="wD" value="${todayKey()}" max="${todayKey()}"></div><div><label>Weight (kg)</label><input id="wKg" type="number" step="0.1" inputmode="decimal" placeholder="${r1(weightOn(todayKey()))}"></div></div>
+    <button class="btn full" style="margin-top:12px" onclick="addWeight()">Save weight</button></div>`;
+  const ws=state.weights;
+  if(ws.length>=2){h+=`<h2>Weight trend</h2><div class="card">${chart(ws.slice(-60))}<p class="sm" style="margin:8px 0 0">${trendMsg(ws,P)}</p></div>`}
+  // 7 days
+  const rows=[];for(let i=0;i<7;i++){const k=shift(todayKey(),-i),a=analyse(k);rows.push([k,a])}
+  const logged=rows.filter(r=>!r[1].empty);
+  if(logged.length){const avg=f=>logged.reduce((s,r)=>s+f(r[1]),0)/logged.length;
+    h+=`<h2>Last 7 days</h2><div class="grid2"><div class="card stat"><b>${r0(avg(a=>a.score))}</b><span>avg day score</span></div><div class="card stat"><b>${rows.filter(r=>r[1].d.workouts.length).length}</b><span>workout days</span></div>
+    <div class="card stat"><b>${r0(avg(a=>a.t.k))}</b><span>avg kcal eaten</span></div><div class="card stat"><b>${r0(avg(a=>a.t.p))} g</b><span>avg protein</span></div></div>
+    <div class="card"><table><tr><th>Day</th><th>Score</th><th>kcal</th><th>Protein</th><th>Gym</th></tr>
+    ${rows.map(([k,a])=>`<tr><td>${fmt(k)}</td><td class="${a.empty?'mute':a.verdict[1]}">${a.empty?'–':a.score}</td><td>${a.empty?'–':r0(a.t.k)}</td><td>${a.empty?'–':r0(a.t.p)+' g'}</td><td>${a.mins?a.mins+' min':'–'}</td></tr>`).join('')}</table></div>`}
+  if(ws.length){h+=`<h2>Weight history</h2><div class="card">${ws.slice().reverse().slice(0,30).map(x=>`<div class="item"><div class="nm">${fmt(x.date)}</div><span class="sm">${r1(x.kg)} kg · BMI ${r1(bmiInfo(x.kg,P.heightCm).b)}</span><button class="del" onclick="delWeight('${x.date}')" aria-label="Remove">✕</button></div>`).join('')}</div>`}
+  el.innerHTML=h;
+}
+function chart(ws){const W=520,H=170,p=28;const ys=ws.map(x=>x.kg),mn=Math.min(...ys)-.5,mx=Math.max(...ys)+.5;
+  const t0=parseKey(ws[0].date).getTime(),t1=parseKey(ws[ws.length-1].date).getTime()||t0+1,span=Math.max(1,t1-t0);
+  const X=k=>p+(parseKey(k).getTime()-t0)/span*(W-p*2),Y=v=>12+(mx-v)/(mx-mn)*(H-36);
+  const path=ws.map((x,i)=>(i?'L':'M')+X(x.date).toFixed(1)+' '+Y(x.kg).toFixed(1)).join(' ');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}"><line x1="${p}" x2="${W-p}" y1="${Y(mx-.5)}" y2="${Y(mx-.5)}" stroke="var(--line)"/><line x1="${p}" x2="${W-p}" y1="${Y(mn+.5)}" y2="${Y(mn+.5)}" stroke="var(--line)"/>
+   <text x="2" y="${Y(mx-.5)+4}" font-size="11" fill="var(--mute)">${r1(mx-.5)}</text><text x="2" y="${Y(mn+.5)+4}" font-size="11" fill="var(--mute)">${r1(mn+.5)}</text>
+   <path d="${path}" fill="none" stroke="var(--acc)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+   ${ws.map(x=>`<circle cx="${X(x.date)}" cy="${Y(x.kg)}" r="3" fill="var(--acc)"/>`).join('')}
+   <text x="${p}" y="${H-4}" font-size="11" fill="var(--mute)">${fmtShort(ws[0].date)}</text><text x="${W-p}" y="${H-4}" font-size="11" fill="var(--mute)" text-anchor="end">${fmtShort(ws[ws.length-1].date)}</text></svg>`}
+function trendMsg(ws,P){const recent=ws.filter(x=>x.date>=shift(todayKey(),-28));const set=recent.length>=2?recent:ws.slice(-2);
+  const a=set[0],b=set[set.length-1],days=(parseKey(b.date)-parseKey(a.date))/864e5;if(days<6)return'Log weight for at least a week to see your trend. Weigh at the same time — morning, before eating.';
+  const rate=(b.kg-a.kg)/days*7,pct=rate/a.kg*100,txt=`${rate>0?'+':''}${r1(rate)} kg per week.`;
+  if(P.goal==='lose'){if(pct<-1)return`<span class="bad">${txt}</span> That's faster than 1% of body weight a week — you're likely losing muscle. Eat a little more, keep protein high.`;
+    if(rate<-.1)return`<span class="good">${txt}</span> Healthy pace for fat loss. Keep going.`;return`<span class="warn">${txt}</span> Not dropping yet. Check your daily calorie line — most days should end at or under target.`}
+  if(P.goal==='gain'){if(rate>.5)return`<span class="warn">${txt}</span> Fast gain — some of this is fat. Trim ~200 kcal.`;if(rate>.1)return`<span class="good">${txt}</span> Steady lean-gain pace.`;return`<span class="warn">${txt}</span> Not gaining. Add ~200–300 kcal a day.`}
+  return Math.abs(rate)<.25?`<span class="good">${txt}</span> Stable — right where maintenance should be.`:`<span class="warn">${txt}</span> Drifting. Nudge calories ${rate>0?'down':'up'} a little.`}
+
+function renderMe(){
+  const el=document.getElementById('v-me');const P=state.profile||{sex:'m',age:'',heightCm:'',goal:'lose',lifestyle:'desk',diet:'n'};
+  const w=state.weights.length?weightOn(todayKey()):'';let h='';
+  if(state.profile){const bi=bmiInfo(w,P.heightCm),cuts=bi.cuts,lo=15,hi=35,pos=Math.min(100,Math.max(0,(bi.b-lo)/(hi-lo)*100));
+    const seg=(a,b,c)=>`<i style="width:${(b-a)/(hi-lo)*100}%;background:${c}"></i>`;
+    const a=analyse(todayKey());
+    h+=`<h2>Your BMI</h2><div class="card"><div class="row"><div><div style="font-size:30px;font-weight:700">${r1(bi.b)}</div><span class="pill ${bi.cls}">${bi.cat}</span></div>
+      <div class="sm mute" style="text-align:right">${r1(w)} kg · ${P.heightCm} cm<br>Healthy range: ${r1(bi.lo)}–${r1(bi.hi)} kg</div></div>
+      <div class="bmi-scale">${seg(lo,cuts[0],'var(--warn)')}${seg(cuts[0],cuts[1],'var(--good)')}${seg(cuts[1],cuts[2],'var(--warn)')}${seg(cuts[2],hi,'var(--bad)')}<span class="bmi-mark" style="left:calc(${pos}% - 1px)"></span></div>
+      <div class="xs mute">${bi.asia?'Using Asian/Indian cut-offs (healthy 18.5–22.9), which flag risk earlier than the WHO global scale.':'Using WHO global cut-offs (healthy 18.5–24.9).'}</div>
+      ${bi.b>=bi.cuts[1]&&P.goal!=='lose'?`<p class="sm warn" style="margin:10px 0 0">Your BMI is above the healthy range. The "Lose fat" goal sets a gentle 500 kcal/day deficit.</p>`:''}
+      ${bi.b<18.5&&P.goal==='lose'?`<p class="sm bad" style="margin:10px 0 0">You're already underweight — "Lose fat" isn't a safe goal. Switch to Maintain or Gain.</p>`:''}
+      <p class="xs mute" style="margin:10px 0 0">BMI doesn't separate muscle from fat. If you lift seriously, a waist under half your height is a better second check.</p></div>
+      <h2>Your daily targets</h2><div class="grid2"><div class="card stat"><b>${r0(a.bmr)}</b><span>kcal at rest (BMR)</span></div><div class="card stat"><b>${r0(a.base)}</b><span>kcal on a rest day</span></div>
+      <div class="card stat"><b>${r0(a.target)}</b><span>kcal target today</span></div><div class="card stat"><b>${a.pT} g</b><span>protein / day</span></div></div>`;
+    h+=planCard(P,w)}
+  h+=`<h2>${state.profile?'Profile':'Set up'}</h2><div class="card">
+    <div class="grid2"><div><label>Height (cm)</label><input id="pH" type="number" inputmode="decimal" value="${P.heightCm}"></div>
+    <div><label>Weight (kg)</label><input id="pW" type="number" step="0.1" inputmode="decimal" value="${w?r1(w):''}"></div>
+    <div><label>Age</label><input id="pA" type="number" inputmode="numeric" value="${P.age}"></div>
+    <div><label>Sex</label><select id="pS"><option value="m" ${P.sex==='m'?'selected':''}>Male</option><option value="f" ${P.sex==='f'?'selected':''}>Female</option></select></div></div>
+    ${state.profile&&hasAI()?`<div class="aibox" style="margin-top:14px">
+      <div class="ai-lbl">✨ AI — YOUR GOAL & YOUR DAY, IN YOUR WORDS</div>
+      <textarea id="pAiTxt" rows="4" placeholder="Goal: lose belly fat and reach 75 kg by March, look fit for a Ladakh ride.
+My day: laptop work 9–10 hours, 30 min bike commute, walk around 4–5k steps, weekend rides.">${esc(P.goalText||'')}</textarea>
+      <div class="row"><span class="xs mute">Sets goal, activity level and target</span><button class="btn sm" id="pAiGo" onclick="aiGoal()">Analyse</button></div>
+      <div id="pAiOut"></div></div>`:''}
+    <label>Goal</label><select id="pG"><option value="lose" ${P.goal==='lose'?'selected':''}>Lose fat</option><option value="maintain" ${P.goal==='maintain'?'selected':''}>Maintain / get fitter</option><option value="gain" ${P.goal==='gain'?'selected':''}>Build muscle (gain)</option></select>
+    <div class="grid2"><div><label>Target weight (kg)</label><input id="pT" type="number" step="0.1" inputmode="decimal" value="${P.targetKg||''}"></div>
+    <div><label>By (optional)</label><input id="pTD" type="date" min="${shift(todayKey(),7)}" value="${P.targetDate||''}"></div></div>
+    <label>Day outside the gym</label><select id="pL"><option value="desk" ${P.lifestyle==='desk'?'selected':''}>Mostly sitting (desk job)</option><option value="feet" ${P.lifestyle==='feet'?'selected':''}>On my feet a lot</option><option value="physical" ${P.lifestyle==='physical'?'selected':''}>Physical work</option>
+      <option value="ai" id="pLai" ${P.lifestyle==='ai'?'selected':''} ${P.lifeMult?'':'hidden disabled'}>From my description${P.lifeMult?' (×'+P.lifeMult+')':''}</option></select>
+    ${P.lifeDesc?`<p class="xs mute" style="margin:6px 0 0">✨ ${esc(P.lifeDesc)}</p>`:''}
+    <label>I eat</label><select id="pD"><option value="v" ${P.diet==='v'?'selected':''}>Vegetarian</option><option value="e" ${P.diet==='e'?'selected':''}>Veg + eggs</option><option value="n" ${P.diet==='n'?'selected':''}>Non-veg</option></select>
+    <label>BMI scale</label><select id="pB"><option value="asia" ${state.settings.bmiScale!=='who'?'selected':''}>Asian / Indian cut-offs</option><option value="who" ${state.settings.bmiScale==='who'?'selected':''}>WHO global</option></select>
+    <button class="btn full" style="margin-top:14px" onclick="saveProfile()">Save</button></div>`;
+  if(state.profile){const c=aiCfg();h+=`<h2>✨ AI assistant</h2><div class="card">
+    <p class="sm" style="margin-top:0">${c.key?'<span class="good">● On</span> — type or photograph meals, describe gym sessions, and get a daily coach review.':'Add your own Claude API key to log food by typing or photographing it, describe gym sessions in your own words, and get a daily coach review.'}</p>
+    <label>Claude API key</label><input id="aiKey" type="password" autocomplete="off" placeholder="${c.key?'Key saved — paste a new one to replace':'sk-ant-…'}">
+    <label>Model</label><select id="aiModel"><option value="claude-haiku-5-5" ${c.model!=='claude-sonnet-5-5'?'selected':''}>Haiku 5.5 — fastest, cheapest</option><option value="claude-sonnet-5-5" ${c.model==='claude-sonnet-5-5'?'selected':''}>Sonnet 5.5 — more accurate</option></select>
+    <div class="grid2" style="margin-top:12px"><button class="btn" onclick="saveAi()">${c.key?'Save & test':'Connect'}</button>${c.key?'<button class="btn danger" onclick="removeAi()">Remove key</button>':''}</div>
+    <p class="sm" id="aiStatus" style="margin:8px 0 0"></p>
+    <p class="xs mute" style="margin:10px 0 0">Get a key at platform.claude.com → API keys. It's stored only on this phone, never in backups. Usage is billed to your API account — a meal photo on Haiku costs well under ₹1. What you log is sent to Anthropic only when you tap Analyse or Ask.</p></div>`}
+  if(state.profile)h+=`<h2>Backup</h2><div class="card"><p class="sm mute" style="margin-top:0">Your data lives only on this phone. Export a backup now and then.</p>
+    <div class="grid2"><button class="btn ghost" onclick="exportData()">Export backup</button><button class="btn ghost" onclick="document.getElementById('imp').click()">Restore backup</button></div>
+    <input type="file" id="imp" accept="application/json" class="hidden" onchange="importData(this.files[0])">
+    <button class="btn danger full" style="margin-top:10px" onclick="resetAll()">Erase everything</button></div>
+    <p class="xs mute" style="text-align:center">Calorie and nutrition numbers are estimates for typical home portions. Not medical advice — see a doctor for health conditions.</p>`;
+  el.innerHTML=h;
+}
+
+function render(){
+  document.getElementById('datenav').classList.toggle('hidden',view!=='today');
+  document.getElementById('dateLbl').textContent=cur===todayKey()?'Today':fmt(cur);
+  document.getElementById('next').style.visibility=cur>=todayKey()?'hidden':'visible';
+  document.getElementById('title').textContent=view==='today'?'Fit Ledger':view==='progress'?'Progress':'Me';
+  ({today:renderToday,progress:renderProgress,me:renderMe})[view]();
+}
+function go(v){view=v;document.querySelectorAll('main>section').forEach(s=>s.classList.toggle('hidden',s.id!=='v-'+v));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));scrollTo(0,0);render()}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.v));
+document.getElementById('prev').onclick=()=>{cur=shift(cur,-1);render()};
+document.getElementById('next').onclick=()=>{if(cur<todayKey()){cur=shift(cur,1);render()}};
+
+/* ---------- actions ---------- */
+function saveProfile(){const v=id=>document.getElementById(id).value;
+  const hc=+v('pH'),kg=+v('pW'),age=+v('pA');
+  if(!(hc>=120&&hc<=230))return alert('Enter height in cm (e.g. 172).');if(!(kg>=30&&kg<=250))return alert('Enter weight in kg (e.g. 74.5).');if(!(age>=14&&age<=100))return alert('Enter your age.');
+  const first=!state.profile,old=state.profile||{},goal=v('pG');
+  const tEl=document.getElementById('pT'),tKg=tEl&&tEl.value?+tEl.value:null,tDate=document.getElementById('pTD')?.value||null;
+  if(tKg!==null){if(!(tKg>=30&&tKg<=250))return alert('Target weight should be in kg.');
+    const tb=tKg/((hc/100)**2);if(tb<18.5)return alert(`${tKg} kg would put your BMI at ${r1(tb)} — underweight for ${hc} cm. Pick at least ${r1(18.5*(hc/100)**2)} kg.`);
+    if(goal==='lose'&&tKg>=kg)return alert('For "Lose fat", the target should be below your current weight.');
+    if(goal==='gain'&&tKg<=kg)return alert('For "Build muscle", the target should be above your current weight.')}
+  const pend=pendingGoal||{};
+  state.profile={heightCm:hc,age,sex:v('pS'),goal,lifestyle:v('pL'),diet:v('pD'),
+    targetKg:goal==='maintain'?null:tKg,targetDate:goal==='maintain'||!tKg?null:tDate,
+    goalText:pend.goalText??old.goalText,lifeMult:pend.lifeMult??old.lifeMult,lifeDesc:pend.lifeDesc??old.lifeDesc,plan:pend.plan??old.plan};
+  pendingGoal=null;state.settings.bmiScale=v('pB');
+  const k=todayKey();if(!state.weights.length||r1(weightOn(k))!==r1(kg)){state.weights=state.weights.filter(x=>x.date!==k);state.weights.push({date:k,kg});state.weights.sort((a,b)=>a.date<b.date?-1:1)}
+  save();first?go('today'):render()}
+function addWeight(){const d=document.getElementById('wD').value,kg=+document.getElementById('wKg').value;if(!d||!(kg>=30&&kg<=250))return alert('Enter a weight in kg.');
+  state.weights=state.weights.filter(x=>x.date!==d);state.weights.push({date:d,kg});state.weights.sort((a,b)=>a.date<b.date?-1:1);save();render()}
+function delWeight(d){if(state.weights.length<=1)return alert('Keep at least one weight entry.');state.weights=state.weights.filter(x=>x.date!==d);save();render()}
+function delFood(id){const d=dayW(cur);d.foods=d.foods.filter(x=>x.id!==id);save();render()}
+function delWork(id){const d=dayW(cur);d.workouts=d.workouts.filter(x=>x.id!==id);save();render()}
+function water(n){const d=dayW(cur);d.water=Math.max(0,d.water+n);save();render()}
+function markDone(v){dayW(cur).done=v;save();render()}
+function copyPrev(){const p=getDay(shift(cur,-1));const d=dayW(cur);p.foods.forEach(x=>d.foods.push({...x,id:uid()}));save();render()}
+
+/* food sheet */
+const dFood=document.getElementById('dFood');let picked=null,qty=1;
+function defaultMeal(){const h=new Date().getHours();return h<11?'Breakfast':h<16?'Lunch':h<19?'Snacks':'Dinner'}
+function openFood(meal){picked=null;document.getElementById('fSearch').value='';document.getElementById('fPicked').classList.add('hidden');document.getElementById('fCustom').classList.add('hidden');
+  document.getElementById('pMeal').value=meal||defaultMeal();
+  const ai=hasAI();document.getElementById('fAI').classList.toggle('hidden',!ai);document.getElementById('fAIhint').classList.toggle('hidden',ai);
+  aiImg=null;aiFoodItems=[];document.getElementById('aiFoodTxt').value='';document.getElementById('aiFoodOut').innerHTML='';document.getElementById('aiThumb').classList.add('hidden');
+  listFoods();dFood.showModal()}
+function listFoods(){const q=document.getElementById('fSearch').value.trim().toLowerCase(),diet=state.profile?.diet||'n';
+  const ok=f=>diet==='n'||(diet==='e'?f.d!=='n':f.d==='v');
+  const list=allFoods().filter(f=>ok(f)&&(!q||f.n.toLowerCase().includes(q))).slice(0,60);
+  document.getElementById('fList').innerHTML=list.map((f,i)=>`<button class="res ${picked&&picked.n===f.n?'on':''}" data-i="${i}"><span>${esc(f.n)}<br><small>${esc(f.u)} · ${r1(f.p)} g protein</small></span><small>${f.k} kcal</small></button>`).join('')||'<p class="sm mute">Not found — add it as your own food below.</p>';
+  document.querySelectorAll('#fList .res').forEach(b=>b.onclick=()=>pick(list[+b.dataset.i]))}
+function pick(f){picked=f;qty=1;document.getElementById('pName').textContent=f.n;document.getElementById('fPicked').classList.remove('hidden');updPick();listFoods()}
+function updPick(){document.getElementById('qVal').textContent=qty;document.getElementById('pInfo').textContent=`${qty} × ${picked.u} · ${r0(picked.k*qty)} kcal · ${r1(picked.p*qty)} g protein`}
+document.getElementById('fSearch').oninput=listFoods;
+document.getElementById('qMinus').onclick=()=>{if(qty>.5){qty=qty>1?qty-1:.5;updPick()}};
+document.getElementById('qPlus').onclick=()=>{qty=qty<1?1:qty+1;updPick()};
+document.getElementById('pAdd').onclick=()=>{if(!picked)return;const f=picked;dayW(cur).foods.push({id:uid(),meal:document.getElementById('pMeal').value,n:f.n,u:f.u,qty,k:f.k,p:f.p,c:f.c,f:f.f,fi:f.fi,s:f.s,t:f.t});save();dFood.close();render()};
+document.getElementById('fCustomTgl').onclick=()=>document.getElementById('fCustom').classList.toggle('hidden');
+document.getElementById('cSave').onclick=()=>{const v=id=>document.getElementById(id).value,n=v('cN').trim();if(!n||!(+v('cK')>0))return alert('Name and calories are needed.');
+  const t=[...document.querySelectorAll('#cTags input:checked')].map(x=>x.value).join(',');
+  const f={n,u:v('cU').trim()||'1 serving',k:+v('cK'),p:+v('cP')||0,c:+v('cC')||0,f:+v('cF')||0,fi:+v('cFi')||0,s:+v('cS')||0,t,d:'v',mine:1};
+  state.custom=state.custom.filter(x=>x.n!==n);state.custom.unshift(f);save();document.getElementById('fCustom').classList.add('hidden');document.getElementById('fSearch').value=n;pick(f)};
+
+/* workout sheet */
+const dWork=document.getElementById('dWork');let wInt='moderate';
+document.getElementById('wType').innerHTML=WK.map(w=>`<option value="${w[0]}">${w[1]}</option>`).join('');
+function wKcal(){const w=WK.find(x=>x[0]===document.getElementById('wType').value),min=+document.getElementById('wMin').value||0;return w[2]*INT[wInt]*weightOn(cur)*min/60}
+function updW(){document.getElementById('wEst').textContent=`≈ ${r0(wKcal())} kcal burnt (estimate for ${r1(weightOn(cur))} kg)`}
+function openWork(){const ai=hasAI();document.getElementById('wAI').classList.toggle('hidden',!ai);document.getElementById('wAIhint').classList.toggle('hidden',ai);
+  document.getElementById('aiWorkTxt').value='';document.getElementById('aiWorkOut').innerHTML='';updW();dWork.showModal()}
+document.querySelectorAll('#wInt button').forEach(b=>b.onclick=()=>{wInt=b.dataset.i;document.querySelectorAll('#wInt button').forEach(x=>x.classList.toggle('on',x===b));updW()});
+document.getElementById('wType').onchange=updW;document.getElementById('wMin').oninput=updW;
+document.getElementById('wAdd').onclick=()=>{const min=+document.getElementById('wMin').value;if(!(min>0))return alert('Enter minutes.');const ty=document.getElementById('wType').value;
+  dayW(cur).workouts.push({id:uid(),type:ty,name:WK.find(x=>x[0]===ty)[1],min,int:wInt,kcal:wKcal(),note:document.getElementById('wNote').value.trim()});
+  document.getElementById('wNote').value='';save();dWork.close();render()};
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
+document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d)d.close()}));
+
+/* ---------- AI (Claude API, key kept only on this phone) ---------- */
+const AIKEY='fitledger-ai';let aiMem=null;
+function aiCfg(){try{const r=localStorage.getItem(AIKEY);if(r)return JSON.parse(r)}catch(e){}return aiMem||{}}
+function setAi(c){aiMem=c;try{c?localStorage.setItem(AIKEY,JSON.stringify(c)):localStorage.removeItem(AIKEY)}catch(e){}}
+const hasAI=()=>!!aiCfg().key;
+const TAGS=['fried','junk','sugary','fruit','veg','protein','whole','refined','rich','alcohol'];
+async function claude(system,content,maxTokens=3000){
+  const c=aiCfg();if(!c.key)throw new Error('Add your API key in Me → AI assistant.');
+  if(!navigator.onLine)throw new Error('You are offline. AI needs internet; manual logging still works.');
+  let r;try{r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':c.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:c.model||'claude-haiku-5-5',max_tokens:maxTokens,system,messages:[{role:'user',content}]})})}catch(e){throw new Error('Could not reach the AI. Check your internet.')}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){const m=j.error?.message||'';throw new Error(r.status===401?'API key was rejected. Check it in Me → AI assistant.':r.status===429?'Rate limit hit — wait a minute and retry.':r.status===400&&/credit/i.test(m)?'Your API account is out of credits.':m||('AI error '+r.status))}
+  const txt=(j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+  if(!txt)throw new Error('AI returned an empty reply. Try again.');return txt}
+function parseJSON(t){const m=t.match(/\{[\s\S]*\}/);if(!m)throw new Error('AI reply was not in the expected format. Try again.');try{return JSON.parse(m[0])}catch(e){throw new Error('AI reply was not in the expected format. Try again.')}}
+const num=(v,max=5000)=>{v=+v;return isFinite(v)&&v>=0?Math.min(v,max):0};
+function userCtx(){const P=state.profile,w=weightOn(cur),bi=bmiInfo(w,P.heightCm);
+  return `User: ${P.sex==='m'?'male':'female'}, ${P.age} years, ${P.heightCm} cm, ${r1(w)} kg, BMI ${r1(bi.b)} (${bi.cat} on ${bi.asia?'Asian':'WHO'} cut-offs). Goal: ${{lose:'lose fat',maintain:'maintain / get fitter',gain:'build muscle'}[P.goal]}. Diet: ${{v:'vegetarian',e:'vegetarian + eggs',n:'non-vegetarian'}[P.diet]}. Lives in India.${P.targetKg?` Target: ${P.targetKg} kg${P.targetDate?' by '+P.targetDate:''}.`:''}${P.lifeDesc?` Day outside gym: ${P.lifeDesc}.`:''}${P.goalText?`\nTheir goal in their own words: ${P.goalText}`:''}`}
+function busy(btn,on,label){btn.disabled=on;btn.innerHTML=on?'<span class="spin"></span>Thinking…':label}
+function mdLite(t){const lines=esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').split('\n');let h='',inL=false;
+  lines.forEach(l=>{const m=l.match(/^\s*[-•*]\s+(.*)/);if(m){if(!inL){h+='<ul>';inL=true}h+=`<li>${m[1]}</li>`}else{if(inL){h+='</ul>';inL=false}if(l.replace(/#/g,'').trim())h+=`<p>${l.replace(/^#+\s*/,'')}</p>`}});return h+(inL?'</ul>':'')}
+
+/* AI food */
+let aiImg=null,aiFoodItems=[];
+function shrink(file){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const s=Math.min(1,1024/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(img.src);res(c.toDataURL('image/jpeg',.82))};img.onerror=()=>rej(new Error('Could not read that photo.'));img.src=URL.createObjectURL(file)})}
+document.getElementById('aiPhoto').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{aiImg=await shrink(f);const t=document.getElementById('aiThumb');t.src=aiImg;t.classList.remove('hidden')}catch(err){document.getElementById('aiFoodOut').innerHTML=`<div class="err">${esc(err.message)}</div>`}e.target.value=''};
+const FOOD_SYS=`You estimate nutrition for a food log used by someone in India. Identify each distinct food item in the description and/or photo. Assume realistic Indian home or restaurant portions unless told otherwise; count visible oil, ghee, chutneys, curd and drinks as separate items when they add meaningful calories.
+Reply with ONLY a JSON object, no other text:
+{"items":[{"name":"short name","serving":"one unit, e.g. 1 dosa, 1 katori, 1 cup","qty":number of servings,"kcal":per serving,"protein":g per serving,"carbs":g,"fat":g,"fiber":g,"added_sugar":g,"tags":[any of ${TAGS.join(', ')}]}],"comment":"1-2 sentences: how this meal fits the user's goal, plus one concrete improvement using Indian foods"}
+Tag rules: fried = deep or shallow fried; junk = packaged or fast food; sugary = sweets or sugary drinks; protein = 10 g+ protein per serving from a good source; whole = whole grains or millets; refined = white rice, maida, white bread; rich = heavy cream, butter or ghee gravy; fruit/veg as appropriate.
+If something is ambiguous, pick the most common Indian version and state the assumption in comment. If the photo shows no food, return {"items":[],"comment":"explain"}.`;
+document.getElementById('aiFoodGo').onclick=async()=>{const btn=document.getElementById('aiFoodGo'),out=document.getElementById('aiFoodOut'),txt=document.getElementById('aiFoodTxt').value.trim();
+  if(!txt&&!aiImg){out.innerHTML='<div class="err">Type what you ate or add a photo.</div>';return}
+  busy(btn,true);out.innerHTML='';
+  try{const meal=document.getElementById('pMeal').value,content=[];
+    if(aiImg)content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:aiImg.split(',')[1]}});
+    content.push({type:'text',text:`${userCtx()}\nMeal: ${meal}.\n${txt?'What I ate: '+txt:'What I ate is in the photo.'}`});
+    const j=parseJSON(await claude(FOOD_SYS,content));
+    aiFoodItems=(j.items||[]).filter(x=>x&&x.name).slice(0,15).map(x=>({n:String(x.name).slice(0,60),u:String(x.serving||'1 serving').slice(0,40),qty:Math.max(.5,Math.round(num(x.qty,20)*2)/2)||1,
+      k:num(x.kcal),p:num(x.protein,300),c:num(x.carbs,500),f:num(x.fat,300),fi:num(x.fiber,100),s:num(x.added_sugar,300),t:(x.tags||[]).filter(t=>TAGS.includes(t)).join(','),ai:1}));
+    out.innerHTML=(j.comment?`<div class="aicomment">${esc(j.comment)}</div>`:'')+(aiFoodItems.length?`<div>${aiFoodItems.map((x,i)=>`<div class="airow"><input type="checkbox" checked data-i="${i}"><div class="nm">${esc(x.n)}<small>${esc(x.u)} · ${r0(x.k)} kcal · ${r1(x.p)} g protein each</small></div><input type="number" step="0.5" min="0.5" value="${x.qty}" data-q="${i}" aria-label="Servings"></div>`).join('')}</div>
+      <button class="btn full" id="aiFoodAdd" style="margin-top:8px">Add to ${esc(meal)}</button>`:'');
+    const add=document.getElementById('aiFoodAdd');if(add)add.onclick=()=>{const m=document.getElementById('pMeal').value;let n=0;
+      out.querySelectorAll('input[data-i]').forEach(cb=>{if(!cb.checked)return;const x=aiFoodItems[+cb.dataset.i],q=+out.querySelector(`[data-q="${cb.dataset.i}"]`).value||x.qty;dayW(cur).foods.push({...x,id:uid(),meal:m,qty:q});n++});
+      if(n){save();dFood.close();render()}};
+  }catch(e){out.innerHTML=`<div class="err">${esc(e.message)}</div>`}
+  busy(btn,false,'Analyse')};
+
+/* AI workout */
+let aiWork=[];
+const WORK_SYS=()=>`You turn a gym or activity description into log entries. Allowed types: ${WK.map(w=>w[0]+' ('+w[1]+')').join(', ')}.
+Reply with ONLY a JSON object:
+{"workouts":[{"type":"one allowed type","minutes":number,"intensity":"light|moderate|hard","kcal":estimated kcal burnt for this user,"note":"short summary of exercises/sets"}],"comment":"2-3 sentences of feedback: training volume, balance across muscle groups, recovery, and what to train next session"}
+If minutes are not given for weights, estimate about 2.5 minutes per set including rest. Group all lifting into one weights entry; cardio parts become separate entries. Be realistic with calories (weight training is roughly 4-6 kcal per minute for an average adult).`;
+document.getElementById('aiWorkGo').onclick=async()=>{const btn=document.getElementById('aiWorkGo'),out=document.getElementById('aiWorkOut'),txt=document.getElementById('aiWorkTxt').value.trim();
+  if(!txt){out.innerHTML='<div class="err">Describe what you did.</div>';return}
+  busy(btn,true);out.innerHTML='';
+  try{const j=parseJSON(await claude(WORK_SYS(),[{type:'text',text:userCtx()+'\nSession: '+txt}]));
+    aiWork=(j.workouts||[]).filter(x=>x&&WK.some(w=>w[0]===x.type)).slice(0,8).map(x=>({type:x.type,name:WK.find(w=>w[0]===x.type)[1],min:Math.round(num(x.minutes,600))||30,int:INT[x.intensity]?x.intensity:'moderate',kcal:num(x.kcal,3000),note:String(x.note||'').slice(0,120)}));
+    out.innerHTML=(j.comment?`<div class="aicomment">${esc(j.comment)}</div>`:'')+(aiWork.length?aiWork.map((x,i)=>`<div class="airow"><input type="checkbox" checked data-i="${i}"><div class="nm">${esc(x.name)} · ${x.min} min<small>${INTL[x.int]} · ${r0(x.kcal)} kcal${x.note?' · '+esc(x.note):''}</small></div></div>`).join('')+`<button class="btn full" id="aiWorkAdd" style="margin-top:8px">Add to log</button>`:'');
+    const add=document.getElementById('aiWorkAdd');if(add)add.onclick=()=>{let n=0;out.querySelectorAll('input[data-i]').forEach(cb=>{if(cb.checked){dayW(cur).workouts.push({...aiWork[+cb.dataset.i],id:uid(),ai:1});n++}});if(n){save();dWork.close();render()}};
+  }catch(e){out.innerHTML=`<div class="err">${esc(e.message)}</div>`}
+  busy(btn,false,'Analyse')};
+
+/* AI coach */
+const daySig=d=>d.foods.map(x=>x.n+x.qty).join('|')+'#'+d.workouts.map(x=>x.type+x.min).join('|')+'#'+d.water+(d.done?'D':'');
+async function askCoach(){const btn=document.getElementById('coachGo'),a=analyse(cur),d=a.d;busy(btn,true);
+  const week=[];for(let i=1;i<=6;i++){const k=shift(cur,-i),x=analyse(k);if(!x.empty)week.push(`${k}: score ${x.score}, ${r0(x.t.k)} kcal, ${r0(x.t.p)} g protein, ${x.mins} min exercise`)}
+  const sys=`You are a practical, encouraging fitness and nutrition coach for someone in India. Be specific and concise, using Indian foods and portions (katori, roti, idli, dal, etc.). Never recommend eating below ${r0(a.floor)} kcal a day or a deficit bigger than 500 kcal. No supplements beyond whey protein or creatine. If anything suggests a medical issue, advise seeing a doctor. Respond in short markdown using exactly these parts:
+**Verdict:** one line on whether today helps or hurts their goal.
+**Went well:** 1-2 bullets.
+**Fix tomorrow:** 3 bullets, each a concrete swap or addition with amounts.
+**Tomorrow's plan:** 4 bullets (Breakfast, Lunch, Snack, Dinner) that fit about ${r0(a.target)} kcal and ${a.pT} g protein and the user's diet.
+Keep it under 200 words.`;
+  const msg=`${userCtx()}
+Date: ${cur}${a.complete?' (day complete)':' (day in progress)'}.
+Targets: ${r0(a.target)} kcal, ${a.pT} g protein, ${a.fibT} g fiber, max ${a.sugT} g added sugar, ${a.waterT} glasses water. Burnt today: ${r0(a.tdee)} kcal incl. ${r0(a.burn)} from exercise.
+Eaten: ${r0(a.t.k)} kcal, ${r0(a.t.p)} g protein, ${r0(a.t.c)} g carbs, ${r0(a.t.f)} g fat, ${r0(a.t.fi)} g fiber, ${r0(a.t.s)} g added sugar. Water: ${d.water} glasses. App score: ${a.score}/100.
+Food log:
+${d.foods.map(x=>`- ${x.meal}: ${x.qty} × ${x.n} (${x.u}) = ${r0(x.k*x.qty)} kcal, ${r1(x.p*x.qty)} g protein`).join('\n')}
+Exercise: ${d.workouts.map(x=>`${x.name} ${x.min} min ${x.int}${x.note?' ('+x.note+')':''}`).join('; ')||'none (rest day)'}
+Previous days: ${week.join('; ')||'no data'}`;
+  try{const txt=await claude(sys,[{type:'text',text:msg}],2500);dayW(cur).ai={text:txt,sig:daySig(d)};save();render()}
+  catch(e){busy(btn,false,'✨ Ask AI coach');document.getElementById('coachErr').textContent=e.message}}
+
+function saveAi(){const key=document.getElementById('aiKey').value.trim(),model=document.getElementById('aiModel').value,st=document.getElementById('aiStatus'),old=aiCfg();
+  const k=key||old.key;if(!k){st.innerHTML='<span class="bad">Paste your API key first.</span>';return}
+  if(!/^sk-ant-/.test(k)){st.innerHTML='<span class="bad">That doesn\'t look like a Claude API key (it starts with sk-ant-).</span>';return}
+  const prev=old;setAi({key:k,model});st.innerHTML='<span class="spin"></span>Testing…';
+  claude('Reply with just: OK',[{type:'text',text:'ping'}],200).then(()=>{st.innerHTML='<span class="good">✓ Connected. AI is on.</span>';document.getElementById('aiKey').value='';document.getElementById('aiKey').placeholder='Key saved — paste a new one to replace'})
+   .catch(e=>{setAi(prev.key?prev:null);st.innerHTML=`<span class="bad">${esc(e.message)}</span>`})}
+/* AI goal + day outside gym */
+let pendingGoal=null,aiGoalRes=null;
+const GOAL_SYS=`You help set up a fitness app profile for someone in India from their own description of their goal and their normal day.
+Reply with ONLY a JSON object:
+{"goal":"lose|maintain|gain","target_weight_kg":number or null,"target_date":"YYYY-MM-DD" or null,
+"activity_multiplier":number between 1.2 and 1.7 for their day OUTSIDE planned gym workouts (1.2 = desk job and little walking, 1.375 = on feet some of the day / ~7-9k steps, 1.55 = physically active job / 10k+ steps),
+"day_summary":"one short line describing their non-gym activity, e.g. Desk job, bike commute, ~5k steps",
+"plan":["3-5 short, concrete bullets tailored to their goal and routine — training split, daily steps, eating pattern around their schedule"],
+"warnings":["anything unrealistic or unsafe, e.g. too fast a target or a target below a healthy BMI; empty if none"]}
+Rules: never set a target weight below BMI 18.5 for their height (Asian cut-offs, healthy 18.5-22.9). Fat loss faster than 0.75% of body weight per week is unsafe; if their date needs more, keep their date but say so in warnings. If they want muscle and fat loss together, pick lose if BMI >= 23, otherwise gain. If they give no target, leave target fields null. Commuting on a motorbike counts as sitting.`;
+async function aiGoal(){const btn=document.getElementById('pAiGo'),out=document.getElementById('pAiOut'),txt=document.getElementById('pAiTxt').value.trim();
+  if(txt.length<10){out.innerHTML='<div class="err">Describe your goal and a normal day in a sentence or two.</div>';return}
+  busy(btn,true);out.innerHTML='';
+  try{const v=id=>document.getElementById(id).value,hc=+v('pH'),kg=+v('pW');
+    const j=parseJSON(await claude(GOAL_SYS,[{type:'text',text:`Today is ${todayKey()}. ${state.profile.sex==='m'?'Male':'Female'}, age ${v('pA')}, ${hc} cm, ${kg} kg, BMI ${r1(kg/((hc/100)**2))}. Diet: ${{v:'vegetarian',e:'vegetarian + eggs',n:'non-vegetarian'}[v('pD')]}.\nIn my words: ${txt}`}]));
+    const goal=['lose','maintain','gain'].includes(j.goal)?j.goal:'maintain';
+    let tKg=num(j.target_weight_kg,250)||null;const minKg=r1(18.5*(hc/100)**2);if(tKg&&tKg<minKg)tKg=minKg;
+    if(tKg&&((goal==='lose'&&tKg>=kg)||(goal==='gain'&&tKg<=kg)))tKg=null;
+    let tDate=/^\d{4}-\d{2}-\d{2}$/.test(j.target_date||'')&&j.target_date>shift(todayKey(),6)?j.target_date:null;if(!tKg)tDate=null;
+    const mult=Math.round(Math.min(1.7,Math.max(1.2,+j.activity_multiplier||1.2))*100)/100;
+    aiGoalRes={goal,tKg,tDate,mult,lifeDesc:String(j.day_summary||'').slice(0,120),plan:(j.plan||[]).slice(0,5).map(s=>String(s).slice(0,200)),warnings:(j.warnings||[]).filter(Boolean).slice(0,3).map(s=>String(s).slice(0,240)),goalText:txt};
+    const g={lose:'Lose fat',maintain:'Maintain / get fitter',gain:'Build muscle'}[goal];
+    out.innerHTML=`<div class="aicomment"><b>Goal:</b> ${g}${tKg?` → ${tKg} kg${tDate?' by '+fmt(tDate):''}`:''}<br><b>Your day:</b> ${esc(aiGoalRes.lifeDesc)} <span class="mute">(activity ×${mult})</span>
+      ${aiGoalRes.warnings.length?`<ul style="margin:6px 0 0;padding-left:18px" class="warn">${aiGoalRes.warnings.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>`:''}
+      ${aiGoalRes.plan.length?`<ul style="margin:6px 0 0;padding-left:18px">${aiGoalRes.plan.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>`:''}</div>
+      <button class="btn full" onclick="applyGoal()">Apply & save</button>`;
+  }catch(e){out.innerHTML=`<div class="err">${esc(e.message)}</div>`}
+  busy(btn,false,'Analyse')}
+function applyGoal(){const r=aiGoalRes;if(!r)return;
+  document.getElementById('pG').value=r.goal;document.getElementById('pT').value=r.tKg||'';document.getElementById('pTD').value=r.tDate||'';
+  const o=document.getElementById('pLai');o.hidden=false;o.disabled=false;document.getElementById('pL').value='ai';
+  pendingGoal={goalText:r.goalText,lifeMult:r.mult,lifeDesc:r.lifeDesc,plan:r.plan};saveProfile()}
+function planCard(P,w){const pc=goalPace(P,w);let h='';
+  if(P.targetKg&&P.goal!=='maintain'){
+    if(pc.reached)h+=`<p class="sm good" style="margin:0">🎉 You've reached your target of ${P.targetKg} kg. Switch to Maintain, or set a new target.</p>`;
+    else{h+=`<div class="row"><div><div style="font-size:22px;font-weight:700">${r1(Math.abs(pc.toGo))} kg</div><span class="xs mute">to ${P.goal==='lose'?'lose':'gain'} → ${P.targetKg} kg</span></div>
+      <div class="sm" style="text-align:right">${pc.rate.toFixed(2)} kg/week<br><span class="xs mute">${P.goal==='lose'?'−':'+'}${pc.adj} kcal/day vs burn</span></div></div>
+      <p class="sm ${pc.tooFast?'warn':'mute'}" style="margin:8px 0 0">${pc.tooFast?`Reaching it by ${fmt(P.targetDate)} needs ${pc.need.toFixed(2)} kg/week — faster than is safe. At a safe pace you'll get there around <b>${fmt(pc.eta)}</b>.`:`At this pace: around <b>${fmt(pc.eta)}</b>${P.targetDate?` (target ${fmt(P.targetDate)})`:''}.`}</p>`}}
+  if(P.plan&&P.plan.length)h+=`<ul style="margin:${h?'10px':'0'} 0 0;padding-left:18px" class="sm">${P.plan.map(p=>`<li style="margin:3px 0">${esc(p)}</li>`).join('')}</ul>`;
+  return h?`<h2>Your goal plan</h2><div class="card">${h}</div>`:''}
+
+function removeAi(){if(confirm('Remove the API key from this phone?')){setAi(null);render()}}
+
+/* backup */
+function exportData(){const b=new Blob([JSON.stringify(state,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`fit-ledger-${todayKey()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2e3)}
+function importData(file){if(!file)return;const r=new FileReader();r.onload=()=>{try{const s=JSON.parse(r.result);if(!s.days||!s.weights)throw 0;if(!confirm('Replace all data on this phone with this backup?'))return;state=s;save();go('today')}catch(e){alert('That file is not a Fit Ledger backup.')}};r.readAsText(file)}
+function resetAll(){if(confirm('Erase all your data? This cannot be undone.')){state={profile:null,weights:[],days:{},custom:[],settings:{bmiScale:'asia'}};save();go('me')}}
+
+render();
+if(!state.profile)go('me');
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
